@@ -11,7 +11,15 @@ import pandas as pd
 # Pandas has Loc and iLoc - both are row first, column second ([,])
 # iloc selects like normal python - 0:10 picks 0-9, whereas loc indexes exclusively, meaning 0:10 is 0-10
 
-def practice():
+
+# load practice dataset
+# can use index_col in read_csv to specify a column in the csv that is an index
+# windows
+wine_reviews = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\winemag-data-130k-v2.csv', index_col=0)
+# mac
+# wine_reviews = pd.read_csv(r"/Users/eric/Desktop/winemag-data-130k-v2.csv", index_col=0)
+
+def createReadWrite(wine_reviews):
     # smple dataframe declaration
     exDF = pd.DataFrame({'Yes': [50, 21], 'No': [131, 2]})
     print(exDF)
@@ -30,14 +38,6 @@ def practice():
     exSeries = pd.Series([30, 35, 40], index=['2015 Sales', '2016 Sales', '2017 Sales'], name='Product A')
     print(exSeries)
 
-    # load practice dataset
-    # can use index_col in read_csv to specify a column in the csv that is an index
-    # windows
-    # wine_reviews = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\winemag-data-130k-v2.csv', index_col=0)
-    # mac
-    wine_reviews = pd.read_csv(r"/Users/eric/Desktop/winemag-data-130k-v2.csv", index_col=0)
-
-
     # use shape() to check size of df is
     print(wine_reviews.shape)
 
@@ -47,6 +47,8 @@ def practice():
     # saves wine reviews DF to csv
     # wine_reviews.to_csv('csv_name.csv')
 
+
+def indexSelectAssign(wine_reviews):
     # accessing the country column of the wine reviews data set
     print(wine_reviews.country)
 
@@ -105,6 +107,8 @@ def practice():
 
     # other good functions to see some summary stats are - unique, mean, value_counts
 
+
+def summaryFunctionMaps(wine_reviews):
     # map is a function that takes one set of values and "maps" them to another set of values
     # map() should expect a single value from the series (a point value, in the below example), and returns a transformed version of the value
     # in the below, we remapped each point to remean the scores to 0
@@ -147,15 +151,97 @@ def practice():
     #
     # star_ratings = wine_reviews.apply(stars, axis='columns')
 
+
+def groupSort(wine_reviews):
     # if we want to group data and operate on the group, we use groupby(), instead of map and apply which iterates over every row
     # replacing value counts by a groupby - value counts is just a shortcut to groupby
     # created a group of reviews which had the same point values for a wine, then we grabbed the points column in the group and counted how many times it appeared
     print(wine_reviews.groupby('points').points.count())
     # any summary functions can be replaced by using groupbys
 
+    # each group can be thought of as a slice of the dataframe containing only data with values that match. You can access this sliced dataframe by using apply, and can manipulate from there however we want
+    print(wine_reviews.groupby('winery').apply(lambda df: df.title.iloc[0]))
+
+    # if you want even more control you can group by multiple columns
+    print(wine_reviews.groupby(['country', 'province']).apply(lambda df: df.loc[df.points.idxmax()]))
+
+    # agg() lets you run different functions on your groupby df simultaneously
+    print(wine_reviews.groupby(['country']).price.agg([len, min, max]))
+
+    # multi indexes can occur from groupbys - a df with more than one index
+    # kind of looks like a multi row pivot table
+    countries_reviewed = wine_reviews.groupby(['country', 'province']).description.agg([len])
+    print(countries_reviewed)
+    # check index type
+    mi = countries_reviewed.index
+    print(type(mi))
+
+    # the most common multi index method to use is just reverting back to a single index
+    countries_reviewed = countries_reviewed.reset_index()
+    print(countries_reviewed)
+    # check index type
+    mi = countries_reviewed.index
+    print(type(mi))
+
+    # groupyby returns in index order, if we want to sort any other way we call sort_values()
+    print(countries_reviewed.sort_values(by='len'))
+
+    # sort_values defaults to ascending, set ascendign to false for descending
+    print(countries_reviewed.sort_values(by='len', ascending=False))
+
+    # sorting on index values
+    print(countries_reviewed.sort_index())
+
+    # sort by multiple values by passing a list to sort_values()
+    print(countries_reviewed.sort_values(by=['country', 'len']))
 
 
+def dtypesMissingValues(wine_reviews):
+    # use dtype to grab the typ eof a specific column
+    print(wine_reviews.price.dtype)
+
+    # or you can grab dtype on every column
+    print(wine_reviews.dtypes)
+
+    # can convert datatypes using astype
+    wine_reviews.points.astype('float64')
+
+    # access dtype of the entire df
+    print(wine_reviews.index.dtype)
+
+    # select null values with is null
+    print(wine_reviews[pd.isnull(wine_reviews.country)])
+
+    # replacing missing values is a common operation
+    # use fillna()
+    wine_reviews.region_2.fillna('Unknown')
+
+    # can also replace non null values with replace()
+    wine_reviews.taster_twitter_handle.replace('@kerinokeefe', '@kerino')
 
 
+def renameCombine(wine_reviews):
+    # rename lets you change index or column names
+    wine_reviews.rename(columns={'points': 'score'})
 
-practice()
+    # renaming indexes using dictionary {index1: name1 , index2: name2}
+    # set_index() is usually more convenient, as renaming indexes is rare
+    wine_reviews.rename(index={0: 'firstEntry', 1: 'secondEntry'})
+
+    # you can name the row index and the column indexes with rename axis
+    wine_reviews.rename_axis('wines', axis='rows').rename_axis('fields', axis='columns')
+
+    # you can combine dfs with concat() join() and merge()
+    canadian_youtube = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\CAvideos.csv', index_col=0)
+
+    british_youtube = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\GBvideos.csv', index_col=0)
+
+    # given a list of elements, concat will just push these elements together along an axis
+    print(pd.concat([canadian_youtube, british_youtube]))
+
+    # join lets you combine different df with an index in common
+    # similar to an sql join with left right etc
+    left = canadian_youtube.set_index(['title', 'trending_date'])
+    right = british_youtube.set_index(['title', 'trending_date'])
+
+    left.join(right, lsuffix='_CAN', rsuffix='_UK')
