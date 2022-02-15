@@ -32,7 +32,11 @@ def practice():
 
     # load practice dataset
     # can use index_col in read_csv to specify a column in the csv that is an index
-    wine_reviews = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\winemag-data-130k-v2.csv', index_col=0)
+    # windows
+    # wine_reviews = pd.read_csv('C:\\Users\\ehold\\Desktop\\Folders\\Datasets\\winemag-data-130k-v2.csv', index_col=0)
+    # mac
+    wine_reviews = pd.read_csv(r"/Users/eric/Desktop/winemag-data-130k-v2.csv", index_col=0)
+
 
     # use shape() to check size of df is
     print(wine_reviews.shape)
@@ -95,6 +99,62 @@ def practice():
 
     # you can assign values to a df very easily
     # wine_reviews['critic'] = 'everyone'
+
+    # generates a high level summary of the attributes in a column - only makes sense for numeric columns
+    print(wine_reviews.points.describe())
+
+    # other good functions to see some summary stats are - unique, mean, value_counts
+
+    # map is a function that takes one set of values and "maps" them to another set of values
+    # map() should expect a single value from the series (a point value, in the below example), and returns a transformed version of the value
+    # in the below, we remapped each point to remean the scores to 0
+    # review_points_mean = wine_reviews.points.mean()
+    # print('Map() function')
+    # print(wine_reviews.points.map(lambda p: p - review_points_mean))
+
+    # apply is an equivalent method to transform a whole DF by calling a custom method on each row
+    # if we called apply() with axis='index' then we would need a function to transform each column, not row
+    # def remean_points(row):
+    #     row.points = row.points - review_points_mean
+    #     return row
+    #
+    # print('Apply() function')
+    # print(wine_reviews.apply(remean_points, axis='columns'))
+
+    # map and apply return new, transformed series and dfs - they dont modify the original data they're called on
+
+    # pandas has mapping operations build in
+    # this is a faster way to remean the points column
+    # pandas understands how to interpret a lot of values on one side and a single value
+    review_points_mean = wine_reviews.points.mean()
+    # lot of values - points vs single value - mean. Mean gets applied to every value
+    print(wine_reviews.points - review_points_mean)
+    # pandas can also do series of equal length
+    # country and region 1 are the same length
+    print(wine_reviews.country + ' - ' + wine_reviews.region_1)
+    # these quick operations are faster than map or apply but cant do as advanced of things as map and apply
+
+    # creating a series of star_ratings to apply to each row based on score or being in canada
+    # def stars(row):
+    #     if row.country == 'Canada':
+    #         return 3
+    #     elif row.points >= 95:
+    #         return 3
+    #     elif row.points >= 85:
+    #         return 2
+    #     else:
+    #         return 1
+    #
+    # star_ratings = wine_reviews.apply(stars, axis='columns')
+
+    # if we want to group data and operate on the group, we use groupby(), instead of map and apply which iterates over every row
+    # replacing value counts by a groupby - value counts is just a shortcut to groupby
+    # created a group of reviews which had the same point values for a wine, then we grabbed the points column in the group and counted how many times it appeared
+    print(wine_reviews.groupby('points').points.count())
+    # any summary functions can be replaced by using groupbys
+
+
+
 
 
 
